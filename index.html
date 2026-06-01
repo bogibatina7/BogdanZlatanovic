@@ -1098,15 +1098,52 @@ function applyLang(l){
 }
 
 /* FORM */
-document.getElementById('fsub').addEventListener('click',function(){
-  this.innerHTML='<span>Sending...</span>';
-  this.disabled=true;
-  setTimeout(()=>{
-    this.style.display='none';
-    const s=document.getElementById('fsuc');
-    s.style.display='block';
-    if(lang==='sr'){const v=s.querySelector('[data-sr]');if(v)s.textContent=v.getAttribute('data-sr');}
-  },1800);
+document.getElementById('fsub').addEventListener('click', async function(){
+  const nameEl = document.querySelector('.fi[placeholder="Your Name"], .fi[placeholder="Vaše ime"]');
+  const emailEl = document.querySelector('.fi[type="email"]');
+  const msgEl = document.querySelector('.ft');
+
+  const name = nameEl ? nameEl.value.trim() : '';
+  const email = emailEl ? emailEl.value.trim() : '';
+  const message = msgEl ? msgEl.value.trim() : '';
+
+  if(!name || !email || !message){
+    alert(lang==='sr' ? 'Molimo popunite sva polja.' : 'Please fill in all fields.');
+    return;
+  }
+  if(!email.includes('@')){
+    alert(lang==='sr' ? 'Unesite ispravnu email adresu.' : 'Please enter a valid email.');
+    return;
+  }
+
+  this.innerHTML = '<span>Sending...</span>';
+  this.disabled = true;
+
+  try {
+    const res = await fetch('https://formspree.io/f/mjgznvrz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name, email, message })
+    });
+
+    if(res.ok){
+      this.style.display = 'none';
+      const s = document.getElementById('fsuc');
+      s.style.display = 'block';
+      if(nameEl) nameEl.value = '';
+      if(emailEl) emailEl.value = '';
+      if(msgEl) msgEl.value = '';
+      if(lang==='sr'){ s.querySelector('[data-sr]') && (s.textContent = s.querySelector('[data-sr]').getAttribute('data-sr')); }
+    } else {
+      this.innerHTML = '<span data-en="Send Message" data-sr="Pošalji poruku">Send Message</span><span class="fa">↗</span>';
+      this.disabled = false;
+      alert(lang==='sr' ? 'Greška pri slanju. Pokušajte ponovo.' : 'Error sending. Please try again.');
+    }
+  } catch(e){
+    this.innerHTML = '<span data-en="Send Message" data-sr="Pošalji poruku">Send Message</span><span class="fa">↗</span>';
+    this.disabled = false;
+    alert(lang==='sr' ? 'Greška pri slanju. Proverite internet konekciju.' : 'Error sending. Check your connection.');
+  }
 });
 
 /* ZOOM-OUT */
